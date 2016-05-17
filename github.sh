@@ -1,12 +1,24 @@
 # Function to create a github repo
 # Thnks to https://www.viget.com/articles/create-a-github-repo-from-the-command-line for inspiration with github tokens
+set -e
+# Check dependencies
+dependencies=( "curl" "jq" "wwefwefweF")
+for dependency in "${dependencies[@]}" ; do
+  which "${dependency}"
+  if [ $? -eq 1 ]; then
+    echo "Dependency not available \"${dependency}\" please install and run this script again"
+    return 1 
+  fi
+done
+
+echo "All dependencies available :) installing functions"
+
 
 function checkCredentials(){
   github_user_name=`git config github.user`
   if [ -z "$user_name" ]; then
     echo "User name not set in git config try \"git config github.user USERNAME\""
     return 1
-
   fi
  
   github_git_token=`git config github.token`
@@ -36,7 +48,6 @@ function createRepo(){
   touch README.md
   git add README.md
   git commit -m 'Initial commit'
-  #curl -u "$user_name" https://api.github.com/user/repos -d "{\"name\":\"$repo_name\"}"
   curl -u "$github_user_name:$github_git_token" https://api.github.com/user/repo -d "{\"name\":\"$repo_name\"}" > /dev/null 2>&1
   git remote add origin git@github.com:$user_name/$repo_name.git > /dev/null 2>&1
   git push -u origin master /dev/null 2>&1
@@ -88,5 +99,5 @@ function listUserGists(){
 
   echo "List gists from ${user_name} since ${since_date}"
  
-  curl -v -X GET -u "${github_user_name}:${github_git_token}" "https://api.github.com/users/${user_name}/gists"
+  curl -v -X GET -u "${github_user_name}:${github_git_token}" "https://api.github.com/users/${user_name}/gists" |  jq '.[] | { url: .url }'
 }
