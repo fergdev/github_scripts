@@ -1,8 +1,8 @@
 # Function to create a github repo
 # Thnks to https://www.viget.com/articles/create-a-github-repo-from-the-command-line for inspiration with github tokens
-set -e
+
 # Check dependencies
-dependencies=( "curl" "jq" "wwefwefweF")
+dependencies=( "curl" "jq" )
 for dependency in "${dependencies[@]}" ; do
   which "${dependency}"
   if [ $? -eq 1 ]; then
@@ -16,13 +16,13 @@ echo "All dependencies available :) installing functions"
 
 function checkCredentials(){
   github_user_name=`git config github.user`
-  if [ -z "$user_name" ]; then
+  if [ -z "${github_user_name}" ]; then
     echo "User name not set in git config try \"git config github.user USERNAME\""
     return 1
   fi
  
   github_git_token=`git config github.token`
-  if [ -z "$git_token" ]; then
+  if [ -z "${github_git_token}" ]; then
     echo "Git token not set in git config try \"git config github.token TOKEN\""
     echo "You can create a git token on github under settings/personal_acces_tokens"
     return 1
@@ -101,3 +101,25 @@ function listUserGists(){
  
   curl -v -X GET -u "${github_user_name}:${github_git_token}" "https://api.github.com/users/${user_name}/gists" |  jq '.[] | { url: .url }'
 }
+
+function githubSearch(){
+  keywords=$1
+  sort=$2
+  order=$3
+
+  checkCredentials
+  if [ $? -eq 1 ]; then
+    return 1
+  fi
+
+  if [ -z "${keywords}" ]; then
+    echo "No keywords"
+    return 1
+  fi
+
+  echo "Searching for \"${keywords}\" sort \"${sort}\" order \"${order}\""
+
+  curl -v -X GET -u "${github_user_name}:${github_git_token}" "https://api.github.com/search/repositories?q=${keywords}&sort=${sort}&order=${order}"
+
+}
+
